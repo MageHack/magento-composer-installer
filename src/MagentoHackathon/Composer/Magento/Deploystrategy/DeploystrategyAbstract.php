@@ -184,12 +184,12 @@ abstract class DeploystrategyAbstract
         file app/etc/   --> link app/etc/file to file
         file app/etc/a  --> link app/etc/a to file
         file app/etc/a  --> if app/etc/a is a file throw exception unless force is set, in that case rm and see above
-        file app/etc/a/ --> link app/etc/a/file to file regardless if app/etc/a existst or not
+        file app/etc/a/ --> link app/etc/a/file to file regardless if app/etc/a exists or not
 
         */
 
         // Create target directory if it ends with a directory separator
-        if (! file_exists($destPath) && in_array(substr($destPath, -1), array('/', '\\')) && ! is_dir($sourcePath)) {
+        if (!file_exists($destPath) && in_array(substr($destPath, -1), array('/', '\\')) && !is_dir($sourcePath)) {
             mkdir($destPath, 0777, true);
             $destPath = $this->removeTrailingSlash($destPath);
         }
@@ -210,6 +210,7 @@ abstract class DeploystrategyAbstract
             // Source file isn't a valid file or glob
             throw new \ErrorException("Source $sourcePath does not exists");
         }
+
         return $this->createDelegate($source, $dest);
     }
 
@@ -316,8 +317,7 @@ abstract class DeploystrategyAbstract
         return $result;
         */
     }
-
-
+    
     /**
      * Create the module's files in the given destination.
      *

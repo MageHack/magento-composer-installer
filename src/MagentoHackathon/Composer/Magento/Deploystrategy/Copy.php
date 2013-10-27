@@ -23,7 +23,6 @@ class Copy extends DeploystrategyAbstract
         $sourcePath = $this->getSourceDir() . '/' . $this->removeTrailingSlash($source);
         $destPath = $this->getDestDir() . '/' . $this->removeTrailingSlash($dest);
 
-
         // Create all directories up to one below the target if they don't exist
         $destDir = dirname($destPath);
         if (!file_exists($destDir)) {

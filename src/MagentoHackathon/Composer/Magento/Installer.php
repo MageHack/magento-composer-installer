@@ -48,6 +48,13 @@ class Installer extends LibraryInstaller implements InstallerInterface
     protected $skipPackageDeployment = false;
 
     /**
+     * If set the package contents (specified in map) will be appended to .gitignore (located in same dir as composer.*)
+     *
+     * @var bool
+     */
+    protected $handleVcs = false;
+
+    /**
      * The module's base directory
      *
      * @var string
@@ -58,6 +65,11 @@ class Installer extends LibraryInstaller implements InstallerInterface
      * @var string
      */
     protected $_deployStrategy = "symlink";
+
+    /**
+     * @var \MagentoHackathon\Composer\Magento\Vcsstrategy\VcsstrategyAbstract
+     */
+    protected $_vcsStrategy;
 
     /**
      * Initializes Magento Module installer
@@ -111,6 +123,43 @@ class Installer extends LibraryInstaller implements InstallerInterface
         if (!empty($extra['skip-package-deployment'])) {
             $this->skipPackageDeployment = true;
         }
+
+        if (!empty($extra['handle-vcs'])) {
+            $this->handleVcs = (bool) $extra['handle-vcs'];
+        }
+    }
+
+    public function getVcsStrategy()
+    {
+        if (!$this->_vcsStrategy) {
+            switch ($this->detectVcs()) {
+                case 'git':
+                    $strategy = new \MagentoHackathon\Composer\Magento\Vcsstrategy\Git;
+                    break;
+                default:
+                    $strategy = null;
+            }
+
+            $this->_vcsStrategy = $strategy;
+        }
+
+        return $this->_vcsStrategy;
+    }
+
+    public function detectVcs()
+    {
+        $currentDir = getcwd(); // @todo Think up a better solution
+        $DS = DIRECTORY_SEPARATOR; // @todo Define?
+
+        switch (true) {
+            case file_exists($currentDir . $DS . \MagentoHackathon\Composer\Magento\Vcsstrategy\Git::FILENAME):
+                $vcs = 'git';
+                break;
+            default:
+                $vcs = null;
+        }
+
+        return $vcs;
     }
 
     /**
@@ -200,6 +249,13 @@ class Installer extends LibraryInstaller implements InstallerInterface
             $strategy->setMappings($this->getParser($package)->getMappings());
             $strategy->deploy();
         }
+
+        if ($this->handleVcs) {
+            if ($vcsStrategy = $this->getVcsStrategy()) {
+                $vcsStrategy->setMappings($this->getParser($package)->getMappings());
+                $vcsStrategy->deploy();
+            }
+        }
     }
 
     /**
@@ -213,7 +269,6 @@ class Installer extends LibraryInstaller implements InstallerInterface
      */
     public function update(InstalledRepositoryInterface $repo, PackageInterface $initial, PackageInterface $target)
     {
-
         if (!$this->skipPackageDeployment) {
             $initialStrategy = $this->getDeployStrategy($initial);
             $initialStrategy->setMappings($this->getParser($initial)->getMappings());
@@ -226,6 +281,13 @@ class Installer extends LibraryInstaller implements InstallerInterface
             $targetStrategy = $this->getDeployStrategy($target);
             $targetStrategy->setMappings($this->getParser($target)->getMappings());
             $targetStrategy->deploy();
+        }
+
+        if ($this->handleVcs) {
+            if ($vcsStrategy = $this->getVcsStrategy()) {
+                $vcsStrategy->setMappings($this->getParser($target)->getMappings());
+                $vcsStrategy->deploy();
+            }
         }
     }
 
@@ -241,6 +303,13 @@ class Installer extends LibraryInstaller implements InstallerInterface
             $strategy = $this->getDeployStrategy($package);
             $strategy->setMappings($this->getParser($package)->getMappings());
             $strategy->clean();
+        }
+
+        if ($this->handleVcs) {
+            if ($vcsStrategy = $this->getVcsStrategy()) {
+                $vcsStrategy->setMappings($this->getParser($package)->getMappings());
+                $vcsStrategy->clean();
+            }
         }
 
         parent::uninstall($repo, $package);
