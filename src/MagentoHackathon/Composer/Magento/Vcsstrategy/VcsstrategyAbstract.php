@@ -11,10 +11,10 @@ namespace MagentoHackathon\Composer\Magento\Vcsstrategy;
 abstract class VcsstrategyAbstract
 {
     /**
-     * @var \SplFileObject The gitignore file
+     * The path mappings to map project's directories to magento's directory structure
+     *
+     * @var array
      */
-    protected $_file = null;
-
     protected $mappings = array();
 
     /**

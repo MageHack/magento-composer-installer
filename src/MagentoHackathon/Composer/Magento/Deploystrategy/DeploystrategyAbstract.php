@@ -317,7 +317,7 @@ abstract class DeploystrategyAbstract
         return $result;
         */
     }
-    
+
     /**
      * Create the module's files in the given destination.
      *

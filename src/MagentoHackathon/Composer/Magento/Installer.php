@@ -129,6 +129,11 @@ class Installer extends LibraryInstaller implements InstallerInterface
         }
     }
 
+    /**
+     * Returns VCS strategy class
+     *
+     * @return null|\MagentoHackathon\Composer\Magento\Vcsstrategy\VcsstrategyAbstract
+     */
     public function getVcsStrategy()
     {
         if (!$this->_vcsStrategy) {
@@ -146,13 +151,15 @@ class Installer extends LibraryInstaller implements InstallerInterface
         return $this->_vcsStrategy;
     }
 
+    /**
+     * Return string identifying which VCS is currently in use
+     *
+     * @return null|string
+     */
     public function detectVcs()
     {
-        $currentDir = getcwd(); // @todo Think up a better solution
-        $DS = DIRECTORY_SEPARATOR; // @todo Define?
-
         switch (true) {
-            case file_exists($currentDir . $DS . \MagentoHackathon\Composer\Magento\Vcsstrategy\Git::FILENAME):
+            case \MagentoHackathon\Composer\Magento\Vcsstrategy\Git::isApplicable():
                 $vcs = 'git';
                 break;
             default:
@@ -299,17 +306,17 @@ class Installer extends LibraryInstaller implements InstallerInterface
      */
     public function uninstall(InstalledRepositoryInterface $repo, PackageInterface $package)
     {
-        if (!$this->skipPackageDeployment) {
-            $strategy = $this->getDeployStrategy($package);
-            $strategy->setMappings($this->getParser($package)->getMappings());
-            $strategy->clean();
-        }
-
         if ($this->handleVcs) {
             if ($vcsStrategy = $this->getVcsStrategy()) {
                 $vcsStrategy->setMappings($this->getParser($package)->getMappings());
                 $vcsStrategy->clean();
             }
+        }
+
+        if (!$this->skipPackageDeployment) {
+            $strategy = $this->getDeployStrategy($package);
+            $strategy->setMappings($this->getParser($package)->getMappings());
+            $strategy->clean();
         }
 
         parent::uninstall($repo, $package);
@@ -345,7 +352,6 @@ class Installer extends LibraryInstaller implements InstallerInterface
      */
     public function getInstallPath(PackageInterface $package)
     {
-
         if (!is_null($this->modmanRootDir) && true === $this->modmanRootDir->isDir()) {
             $targetDir = $package->getTargetDir();
             if (!$targetDir) {
